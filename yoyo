@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 粉絲抽獎系統 ✨</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            color: #FFD700;
+            margin: 10px 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 25px;
+            color: white;
+            width: 200px;
+            margin: 5px;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: none;
+        }
+
+        /* 添加倒計時樣式 */
+        .countdown {
+            font-size: 24px;
+            color: #FFD700;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        /* 平台信息樣式 */
+        .platform-info {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .platform-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 25px;
+            color: white;
+            width: 200px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 登入區域 -->
+        <div id="loginSection" class="card">
+            <h1 style="text-align: center;">✨ 粉絲抽獎系統 ✨</h1>
+            <div style="text-align: center;">
+                <input type="text" id="username" placeholder="用戶名">
+                <input type="password" id="password" placeholder="密碼">
+                <br>
+                <button class="btn" onclick="login()">登入</button>
+            </div>
+        </div>
+
+        <!-- 用戶面板 -->
+        <div id="userPanel" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>歡迎回來, <span id="userWelcome"></span></h2>
+                <button class="btn" onclick="logout()">登出</button>
+            </div>
+
+            <div class="dashboard">
+                <div class="stat-card">
+                    <h3>我的抽獎券</h3>
+                    <div class="stat-number" id="userTickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>參與抽獎次數</h3>
+                    <div class="stat-number" id="userParticipations">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>中獎次數</h3>
+                    <div class="stat-number" id="userWins">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>中獎率</h3>
+                    <div class="stat-number" id="userWinRate">0%</div>
+                </div>
+            </div>
+
+            <div class="platform-info">
+                <h3>平台資訊</h3>
+                <div class="platform-input">
+                    <select id="platform">
+                        <option value="TIKTOK">TIKTOK</option>
+                        <option value="YOUTUBE">YOUTUBE</option>
+                        <option value="FACEBOOK">FACEBOOK</option>
+                        <option value="INSTAGRAM">INSTAGRAM</option>
+                    </select>
+                    <input type="text" id="platformId" placeholder="平台ID">
+                    <input type="text" id="platformNote" placeholder="備註">
+                    <button class="btn" onclick="updatePlatformInfo()">更新資訊</button>
+                </div>
+            </div>
+
+            <div class="countdown" id="countdown">
+                距離開獎還有: <span id="timer">12:00:00</span>
+            </div>
+
+            <div class="card">
+                <h3>當前抽獎活動</h3>
+                <div id="currentDrawInfo">
+                    <p>參與人數: <span id="participantsCount">0</span></p>
+                    <p>總抽獎券數: <span id="totalTickets">0</span></p>
+                    <p>預計開獎時間: <span id="drawTime">待定</span></p>
+                </div>
+                <button class="btn" onclick="participateDraw()">參加抽獎</button>
+            </div>
+        </div>
+
+        <!-- 管理員面板 -->
+        <div id="adminPanel" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>管理員控制面板</h2>
+                <button class="btn" onclick="logout()">登出</button>
+            </div>
+            <button class="btn" onclick="showAddUser()">新增會員</button>
+            <button class="btn" onclick="forceDraw()">立即開獎</button>
+            <div class="card">
+                <h3>會員列表</h3>
+                <div id="userList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <script>
+        // 系統配置
+        const config = {
+            drawInterval: 12 * 60 * 60 * 1000, // 12小時
+            minParticipants: 3
+        };
+
+        // 修改用戶數據結構
+        let users = {
+            'admin': {
+                password: 'admin123',
+                isAdmin: true,
+                tickets: 0,
+                wins: 0,
+                participations: 0,
+                platform: '',
+                platformId: '',
+                platformNote: ''
+            }
+        };
+
+        let currentUser = null;
+
+        // 抽獎狀態
+        let drawState = {
+            nextDrawTime: null,
+            participants: [],
+            isActive: false
+        };
+
+        // 登入功能
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showAlert('請輸入用戶名和密碼');
+                return;
+            }
+
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                document.getElementById('loginSection').style.display = 'none';
+                
+                if (users[username].isAdmin) {
+                    document.getElementById('adminPanel').style.display = 'block';
+                    updateUserList();
+                } else {
+                    document.getElementById('userPanel').style.display = 'block';
+                    updateUserDashboard();
+                }
+                
+                showAlert('登入成功');
+            } else {
+                showAlert('用戶名或密碼錯誤');
+            }
+        }
+
+        // 登出功能
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('userPanel').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showAlert('已登出');
+        }
+
+        // 顯示提示訊息
+        function showAlert(message) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+            setTimeout(() => alertBox.style.display = 'none', 3000);
+        }
+
+        // 更新用戶儀表板
+        function updateUserDashboard() {
+            if (!currentUser) return;
+            const user = users[currentUser];
+            document.getElementById('userWelcome').textContent = currentUser;
+            document.getElementById('userTickets').textContent = user.tickets;
+            document.getElementById('userParticipations').textContent = user.participations;
+            document.getElementById('userWins').textContent = user.wins;
+            document.getElementById('userWinRate').textContent = 
+                user.participations > 0 ? ((user.wins / user.participations) * 100).toFixed(1) + '%' : '0%';
+        }
+
+        // 更新用戶列表
+        function updateUserList() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            Object.entries(users).forEach(([username, user]) => {
+                if (!user.isAdmin) {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = `
+                        <p>用戶名: ${username}</p>
+                        <p>抽獎券: ${user.tickets}</p>
+                        <p>中獎次數: ${user.wins}</p>
+                        <p>平台: ${user.platform}</p>
+                        <p>ID: ${user.platformId}</p>
+                        <p>備註: ${user.platformNote}</p>
+                        <button class="btn" onclick="addTickets('${username}')">發放抽獎券</button>
+                    `;
+                    userList.appendChild(div);
+                }
+            });
+        }
+
+        // 新增會員
+        function showAddUser() {
+            const username = prompt('請輸入新用戶名:');
+            if (!username) return;
+            
+            if (users[username]) {
+                showAlert('用戶已存在');
+                return;
+            }
+
+            const password = prompt('請輸入密碼:');
+            if (!password) return;
+
+            users[username] = {
+                password: password,
+                isAdmin: false,
+                tickets: 0,
+                wins: 0,
+                participations: 0,
+                platform: '',
+                platformId: '',
+                platformNote: ''
+            };
+
+            updateUserList();
+            showAlert('用戶創建成功');
+        }
+
+        // 發放抽獎券
+        function addTickets(username) {
+            const amount = parseInt(prompt('請輸入抽獎券數量:'));
+            if (!amount || amount < 1) return;
+            
+            users[username].tickets += amount;
+            updateUserList();
+            showAlert(`已發放 ${amount} 張抽獎券給 ${username}`);
+        }
+
+        // 參加抽獎
+        function participateDraw() {
+            if (!currentUser || !users[currentUser]) return;
+            
+            const user = users[currentUser];
+            if (user.tickets < 1) {
+                showAlert('抽獎券不足');
+                return;
+            }
+
+            if (drawState.participants.includes(currentUser)) {
+                showAlert('您已經參加了本次抽獎');
+                return;
+            }
+
+            user.tickets--;
+            user.participations++;
+            drawState.participants.push(currentUser);
+            
+            updateUserDashboard();
+            showAlert('成功參加抽獎');
+            saveData();
+        }
+
+        // 更新平台信息
+        function updatePlatformInfo() {
+            if (!currentUser) return;
+            
+            const platform = document.getElementById('platform').value;
+            const platformId = document.getElementById('platformId').value;
+            const platformNote = document.getElementById('platformNote').value;
+
+            users[currentUser].platform = platform;
+            users[currentUser].platformId = platformId;
+            users[currentUser].platformNote = platformNote;
+
+            showAlert('平台資訊更新成功');
+            saveData();
+        }
+
+        // 開始倒計時
+        function startCountdown() {
+            if (!drawState.nextDrawTime) {
+                drawState.nextDrawTime = Date.now() + config.drawInterval;
+            }
+
+            function updateTimer() {
+                const now = Date.now();
+                const timeLeft = drawState.nextDrawTime - now;
+
+                if (timeLeft <= 0) {
+                    document.getElementById('timer').textContent = '開獎時間到！';
+                    if (drawState.isActive) {
+                        executeDraw();
+                    }
+                    return;
+                }
+
+                const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+                const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+                const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+
+                document.getElementById('timer').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // 執行抽獎
+        function executeDraw() {
+            const participants = drawState.participants;
+            if (participants.length < config.minParticipants) {
+                showAlert('參與人數不足，無法開獎');
+                return;
+            }
+
+            let winnersCount = 1;
+            if (participants.length >= 20) winnersCount = 3;
+            else if (participants.length >= 10) winnersCount = 2;
+
+            const winners = [];
+            const participantsCopy = [...participants];
+
+            for (let i = 0; i < winnersCount; i++) {
+                if (participantsCopy.length === 0) break;
+                const winnerIndex = Math.floor(Math.random() * participantsCopy.length);
+                const winner = participantsCopy.splice(winnerIndex, 1)[0];
+                winners.push(winner);
+                users[winner].wins++;
+            }
+
+            // 顯示中獎結果
+            let message = '🎉 抽獎結果 🎉\n\n';
+            winners.forEach((winner, index) => {
+                message += `第${index + 1}名: ${winner}\n`;
+                message += `平台: ${users[winner].platform}\n`;
+                message += `ID: ${users[winner].platformId}\n`;
+                message += `備註: ${users[winner].platformNote}\n\n`;
+            });
+
+            alert(message);
+
+            // 重置抽獎狀態
+            drawState.participants = [];
+            drawState.nextDrawTime = Date.now() + config.drawInterval;
+            drawState.isActive = false;
+
+            updateUserDashboard();
+            saveData();
+        }
+
+        // 管理員強制開獎
+        function forceDraw() {
+            if (confirm('確定要立即開獎嗎？')) {
+                executeDraw();
+            }
+        }
+
+        // 保存數據
+        function saveData() {
+            try {
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('drawState', JSON.stringify(drawState));
+            } catch (e) {
+                console.error('保存數據失敗:', e);
+            }
+        }
+
+        // 加載數據
+        function loadData() {
+            try {
+                const savedUsers = localStorage.getItem('users');
+                const savedDrawState = localStorage.getItem('drawState');
+                if (savedUsers) users = JSON.parse(savedUsers);
+                if (savedDrawState) drawState = JSON.parse(savedDrawState);
+            } catch (e) {
+                console.error('加載數據失敗:', e);
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            startCountdown();
+        });
+    </script>
+</body>
+</html>
